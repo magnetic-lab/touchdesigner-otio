@@ -1,5 +1,4 @@
 import td
-
 from tdotioclip_ui import TDOtioClipUI
 
 
@@ -8,14 +7,28 @@ class TDOtioTrackUI:
 	TRACK_HEIGHT = 75
 
 	def __init__(self, otio_track, parent):
-		self.ownerComp = parent.create(td.containerCOMP, otio_track.name)
+		self.name = otio_track.name or "track"
+		self.ownerComp = parent.create(td.containerCOMP, self.name)
 		self.otio = list(otio_track)
 		self.clips = []
 
-	def __build(self):
+		self.__build()
 
-		self.ownerComp.par.w = self.ownerComp.parent().par.w
-		self.ownerComp.par.h = self.TRACK_HEIGHT
+	def __build(self):
+		self.ownerComp.par.h = self.TRACK_HEIGHT  # have to set here before creating clips
 
 		for clip in list(self.otio):
-			self.clips.append(TDOtioClipUI(clip, self.ownerComp))
+			tdotio_c = TDOtioClipUI(clip, self.ownerComp)
+
+			if not self.clips:
+				self.clips.append(tdotio_c)
+				continue
+
+			prev = self.clips[-1]
+			# set the x to be previous' x + w
+			tdotio_c.ownerComp.par.x = prev.ownerComp.par.x + prev.ownerComp.par.w
+			self.clips.append(tdotio_c)
+
+		# make sure the total width is equal to the last clip's x + w
+		if self.clips:
+			self.ownerComp.par.w = self.clips[-1].ownerComp.par.x + self.clips[-1].ownerComp.par.w
