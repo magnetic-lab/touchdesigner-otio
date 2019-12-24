@@ -17,6 +17,18 @@ class TDOtioClipUI:
 
         self.__build()
 
+    def start(self):
+        return self.otio.visible_range().start_time.value
+
+    def Start(self):
+        return self.start()
+
+    def duration(self):
+        return self.otio.visible_range().duration.value
+
+    def Duration(self):
+        return self.duration()
+
     def __build(self):
         self.ownerComp.par.w = self.otio.duration().value
 
