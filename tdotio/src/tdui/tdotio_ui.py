@@ -17,7 +17,11 @@ class TDOtioUI:
     def __init__(self, ownerComp):
 
         self.ownerComp = ownerComp
-        self.timeline = self.ReadFromFile(TEST_FCPXML)
+        self.core = self.ownerComp.op("tdotio_core")
+        self._current_frame = self.core.op("null_playhead")[0]
+        self.timeline = self.read_from_file(TEST_FCPXML)
+
+        self.__build()
 
     @property
     def Name(self):
@@ -35,6 +39,48 @@ class TDOtioUI:
             print(str(target_file))
             raise
 
+        return self.timeline
+
     def ReadFromFile(self, *args, **kwargs):
         """Touch Designer Wrapper method for 'read_from_file'."""
-        self.read_from_file(*args, **kwargs)
+        return self.read_from_file(*args, **kwargs)
+
+    def Timeline(self):
+        return self.timeline
+
+    def Core(self):
+        return self.core
+
+    def play(self):
+        first = None
+        second = None
+        next_ = None
+
+        for track in self.timeline.otio.video_tracks():
+            start_time = track.visible_range().start_time.value
+            duration = track.visible_range().duration.value
+
+            if start_time <= self._current_frame <= start_time + duration:
+                for clip in track:
+                    c_start_time = clip.visible_range().start_time.value
+                    c_duration = clip.visible_range().duration.value
+                    if clip.schema_name() == "Clip" \
+                            and c_start_time <= self._current_frame <= c_duration:
+                        if not first:
+                            first = clip
+                        else:
+                            second = clip
+
+            if first and second:
+                break
+
+        # find next clip to be loaded into buffer
+
+        return first.name, second.name, next_
+
+    def Play(self):
+        return self.play()
+
+    def __build(self):
+
+        self.core.op("slider_timeline").par.Valuerange2 = self.timeline.otio.duration().value
