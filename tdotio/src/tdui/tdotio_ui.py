@@ -36,5 +36,4 @@ class TDOtioUI:
             raise
 
     def ReadFromFile(self, *args, **kwargs):
-        """Touch Designer Wrapper method for 'read_from_file'."""
         self.read_from_file(*args, **kwargs)
