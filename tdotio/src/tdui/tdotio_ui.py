@@ -62,21 +62,24 @@ class TDOtioUI:
 
             if start_time <= self._current_frame <= start_time + duration:
                 for clip in track:
-                    c_start_time = clip.visible_range().start_time.value
-                    c_duration = clip.visible_range().duration.value
-                    if clip.schema_name() == "Clip" \
-                            and c_start_time <= self._current_frame <= c_duration:
-                        if not first:
-                            first = clip
-                        else:
-                            second = clip
+                    if not clip.schema_name() == "Clip":
+                        continue
+                    c_start_time = clip.trimmed_range_in_parent().start_time.value
+                    c_duration = clip.trimmed_range_in_parent().duration.value
+                    if not c_start_time <= self._current_frame <= c_start_time + c_duration:
+                        continue
+
+                    if not first:
+                        first = clip
+                    else:
+                        second = clip
 
             if first and second:
                 break
 
         # find next clip to be loaded into buffer
 
-        return first.name, second.name, next_
+        return first.name if first else first, second.name if second else second, next_
 
     def Play(self):
         return self.play()
