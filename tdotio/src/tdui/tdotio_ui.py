@@ -34,6 +34,8 @@ class TDOtioUI:
                 otio.adapters.read_from_file(target_file), self.ownerComp)
 
             for child in garbage:
+                if not child.__class__.__name__ == "containerCOMP":
+                    continue
                 child.destroy()
         except:
             print(str(target_file))
@@ -52,11 +54,13 @@ class TDOtioUI:
         return self.core
 
     def play(self):
-        first = None
-        second = None
+        a_media = None
+        b_media = None
         next_ = None
 
-        for track in self.timeline.otio.video_tracks():
+        reversed_tracks = list(self.timeline.otio.video_tracks())
+        reversed_tracks.reverse()
+        for track in reversed_tracks:
             start_time = track.visible_range().start_time.value
             duration = track.visible_range().duration.value
 
@@ -69,20 +73,31 @@ class TDOtioUI:
                     if not c_start_time <= self._current_frame <= c_start_time + c_duration:
                         continue
 
-                    if not first:
-                        first = clip
+                    if not a_media:
+                        a_media = clip
                     else:
-                        second = clip
+                        b_media = clip
 
-            if first and second:
+            if a_media and b_media:
                 break
 
         # find next clip to be loaded into buffer
-
-        return first.name if first else first, second.name if second else second, next_
+        if a_media:
+            self.core.op("moviefilein_a").par.file = self.__decode_url(
+                a_media.media_reference.target_url)
+            self.core.op("moviefilein_a").par.reloadpulse.pulse()
+        if b_media:
+            self.core.op("moviefilein_b").par.file = self.__decode_url(
+                b_media.media_reference.target_url)
+            self.core.op("moviefilein_b").par.reloadpulse.pulse()
+        return a_media.name if a_media else a_media, b_media.name if b_media else b_media, next_
 
     def Play(self):
         return self.play()
+
+    @staticmethod
+    def __decode_url(url):
+        return url.replace("file://localhost/", "").replace("%3a", ":")
 
     def __build(self):
 
