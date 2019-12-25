@@ -1,3 +1,16 @@
+"""Touch Designer OpenTimelineIO implementation.
+
+TDOtio is a tox which visualizes and plays back any otio-compatible timeline format within Touch.
+TDOtio serves both as a visual interactive representation of a timeline and also a playback engine
+with controls for reviewing content inside Touch Designer.
+
+TODO: in the current implementation, only the topmost 2 tracks' media clips which simultaneosly
+occupy the current playhead frame are loaded and displayed by 2 moviefileinTOP's. This means the
+resulting output will not match the edit in Premiere in some cases. To resolve, we need to
+dynamically create a new moviefileinTOP for each clip detected as being active and visible at the
+current playhead(especially in cases involving transparency).
+"""
+
 import os
 import sys
 
@@ -21,6 +34,10 @@ class TDOtioUI:
         self._current_frame = self.core.op("null_playhead")[0]
         self.timeline = self.read_from_file(TEST_FCPXML)
 
+        self.__math_a_chop = self.core.op("math_a")
+        self.__math_b_chop = self.core.op("math_b")
+        self.__movie_a_top = self.core.op("moviefilein_a")
+        self.__movie_b_top = self.core.op("moviefilein_b")
         self.__build()
 
     @property
@@ -54,6 +71,26 @@ class TDOtioUI:
         return self.core
 
     def play(self):
+        self.core.op("slider_timeline").par.Sliderignoreinteract = True
+        self.core.op("playback_rate").par.value0 = 60
+
+    def Play(self):
+        self.play()
+
+    def pause(self):
+        slider_timeline = self.core.op("slider_timeline")
+        playback_signal = self.core.op("playback_signal")[0]
+        slider_timeline.par.Value0 = \
+            playback_signal / (slider_timeline.par.Valuerange2 - slider_timeline.par.Valuerange1)
+        self.core.op("playback_speed").par.resetpulse.pulse()
+        slider_timeline.par.Sliderignoreinteract = False
+        self.core.op("playback_rate").par.value0 = 0
+
+    def Pause(self):
+        self.pause()
+
+    def get_playback_clips(self):
+        # TODO: heavy optomization needed
         a_media = None
         b_media = None
         next_ = None
@@ -83,17 +120,23 @@ class TDOtioUI:
 
         # find next clip to be loaded into buffer
         if a_media:
-            self.core.op("moviefilein_a").par.file = self.__decode_url(
-                a_media.media_reference.target_url)
-            self.core.op("moviefilein_a").par.reloadpulse.pulse()
+            self.__math_a_chop.par.preoff = self.__calculate_clip_start_offset(a_media)
+            self.__movie_a_top.par.file = self.__decode_url(a_media.media_reference.target_url)
+            self.__movie_a_top.par.reloadpulse.pulse()
         if b_media:
-            self.core.op("moviefilein_b").par.file = self.__decode_url(
-                b_media.media_reference.target_url)
-            self.core.op("moviefilein_b").par.reloadpulse.pulse()
+            self.__math_b_chop.par.preoff = self.__calculate_clip_start_offset(b_media)
+            self.__movie_b_top.par.file = self.__decode_url(b_media.media_reference.target_url)
+            self.__movie_b_top.par.reloadpulse.pulse()
         return a_media.name if a_media else a_media, b_media.name if b_media else b_media, next_
 
-    def Play(self):
-        return self.play()
+    def GetPlaybackClips(self):
+        return self.get_playback_clips()
+
+    def __calculate_clip_start_offset(self, otio_clip):
+        timeline_start = self.core.op("slider_timeline").par.Valuerange1
+        clip_start = otio_clip.trimmed_range_in_parent().start_time.value
+
+        return timeline_start - clip_start
 
     @staticmethod
     def __decode_url(url):
