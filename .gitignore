@@ -1,0 +1,3 @@
+*.toe
+*.pyc
+__pycache__/*
