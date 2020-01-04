@@ -90,26 +90,31 @@ class TDOtioUI:
         self.pause()
 
     def get_playback_clips(self):
-        # TODO: heavy optomization needed
+        # TODO: heavy optomization needed, change name
         a_media = None
         b_media = None
-        next_ = None
 
+        # iterate over the reversed list so we're always looking at the top-most layers first
         reversed_tracks = list(self.timeline.otio.video_tracks())
         reversed_tracks.reverse()
         for track in reversed_tracks:
             start_time = track.visible_range().start_time.value
             duration = track.visible_range().duration.value
 
+            # only continue if the current track exists at the current playhead
             if start_time <= self._current_frame <= start_time + duration:
                 for clip in track:
+                	# skip gaps
                     if not clip.schema_name() == "Clip":
                         continue
+
+                    # check to see if the current clip's duration intersects the curent playhead
                     c_start_time = clip.trimmed_range_in_parent().start_time.value
                     c_duration = clip.trimmed_range_in_parent().duration.value
                     if not c_start_time <= self._current_frame <= c_start_time + c_duration:
                         continue
 
+                    # TODO: this sucks we need to move to a more dynamic movieFileInTOP per track
                     if not a_media:
                         a_media = clip
                     else:
@@ -127,10 +132,9 @@ class TDOtioUI:
             self.__math_b_chop.par.preoff = self.__calculate_clip_start_offset(b_media)
             self.__movie_b_top.par.file = self.__decode_url(b_media.media_reference.target_url)
             self.__movie_b_top.par.reloadpulse.pulse()
-        return a_media.name if a_media else a_media, b_media.name if b_media else b_media, next_
 
     def GetPlaybackClips(self):
-        return self.get_playback_clips()
+        self.get_playback_clips()
 
     def __calculate_clip_start_offset(self, otio_clip):
         timeline_start = self.core.op("slider_timeline").par.Valuerange1
