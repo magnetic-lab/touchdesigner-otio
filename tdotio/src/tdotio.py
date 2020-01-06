@@ -16,21 +16,21 @@ import sys
 
 import opentimelineio as otio
 
-TDOTIO_PATH = os.path.join(os.environ.get("TDOTIO_PATH", ""), "src", "tdui")
+TDOTIO_PATH = os.path.join(os.environ.get("TDOTIO_PATH", ""), "src")
 if TDOTIO_PATH and not TDOTIO_PATH in sys.path:
     sys.path.append(TDOTIO_PATH)
 
-from tdotiotimeline_ui import TDOtioTimelineUI
+from .tdotiotimeline import TDOtioTimeline
 
 TEST_FCPXML = "E:\\SANDBOX\\tdotio_demo\\tdotio_demo.xml"
 
 
-class TDOtioUI:
+class TDOtio:
 
-    def __init__(self, ownerComp):
+    def __init__(self, owner_comp):
 
-        self.ownerComp = ownerComp
-        self.core = self.ownerComp.op("tdotio_core")
+        self.owner_comp = owner_comp
+        self.core = self.owner_comp.op("tdotio_core")
         self._current_frame = self.core.op("null_playhead")[0]
         self.timeline = self.read_from_file(TEST_FCPXML)
 
@@ -42,13 +42,13 @@ class TDOtioUI:
 
     @property
     def Name(self):
-        return self.ownerComp.name
+        return self.owner_comp.name
 
     def read_from_file(self, target_file):
-        garbage = self.ownerComp.op("timeline/video").children
+        garbage = self.owner_comp.op("timeline/video").children
         try:
-            self.timeline = TDOtioTimelineUI(
-                otio.adapters.read_from_file(target_file), self.ownerComp)
+            self.timeline = TDOtioTimeline(
+                otio.adapters.read_from_file(target_file), self.owner_comp)
 
             for child in garbage:
                 if not child.__class__.__name__ == "containerCOMP":
@@ -104,7 +104,7 @@ class TDOtioUI:
             # only continue if the current track exists at the current playhead
             if start_time <= self._current_frame <= start_time + duration:
                 for clip in track:
-                	# skip gaps
+                        # skip gaps
                     if not clip.schema_name() == "Clip":
                         continue
 

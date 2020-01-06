@@ -4,15 +4,13 @@ import re
 import td
 
 
-class TDOtioClipUI:
+class TDOtioClip:
 
     def __init__(self, otio_clip, parent):
         self.name = otio_clip.name or "clip"
         self.otio = otio_clip
-
         self.ownerComp = parent.create(td.containerCOMP, re.sub(r"\.|\s", "_", self.name))
         self.ownerComp.par.h = parent.par.h
-
         self.__core_base = self.ownerComp.create(td.baseCOMP, "core")
 
         self.__build()
