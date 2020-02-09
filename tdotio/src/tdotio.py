@@ -29,10 +29,10 @@ class TDOtio:
 
     def __init__(self, owner_comp):
 
-        self.owner_comp = owner_comp
-        self.core = self.owner_comp.op("tdotio_core")
+        self.ower_comp = owner_comp
+        self.core = self.ower_comp.op("tdotio_core")
         self._current_frame = self.core.op("null_playhead")[0]
-        self.timeline = self.read_from_file(TEST_FCPXML)
+        self.timeline = self.__read_from_file(TEST_FCPXML)
 
         self.__math_a_chop = self.core.op("math_a")
         self.__math_b_chop = self.core.op("math_b")
@@ -42,13 +42,57 @@ class TDOtio:
 
     @property
     def Name(self):
-        return self.owner_comp.name
+        return self.ower_comp.name
 
-    def read_from_file(self, target_file):
-        garbage = self.owner_comp.op("timeline/video").children
+    @staticmethod
+    def __decode_url(url):
+        return url.replace("file://localhost/", "").replace("%3a", ":")
+
+    def Core(self):
+        return self.core
+
+    def Pause(self):
+        self.__pause()
+
+    def Play(self):
+        self.__play()
+
+    def ReadFromFile(self, *args, **kwargs):
+        """Touch Designer Wrapper method for '__read_from_file'."""
+        return self.__read_from_file(*args, **kwargs)
+
+    @property
+    def Timeline(self):
+        return self.timeline
+
+    def __build(self):
+
+        self.core.op("slider_timeline").par.Valuerange2 = self.timeline.otio.duration().value
+
+    def __calculate_clip_start_offset(self, otio_clip):
+        timeline_start = self.core.op("slider_timeline").par.Valuerange1
+        clip_start = otio_clip.trimmed_range_in_parent().start_time.value
+
+        return timeline_start - clip_start
+
+    def __pause(self):
+        slider_timeline = self.core.op("slider_timeline")
+        playback_signal = self.core.op("playback_signal")[0]
+        slider_timeline.par.Value0 = \
+            playback_signal / (slider_timeline.par.Valuerange2 - slider_timeline.par.Valuerange1)
+        self.core.op("playback_speed").par.resetpulse.pulse()
+        slider_timeline.par.Sliderignoreinteract = False
+        self.core.op("playback_rate").par.value0 = 0
+
+    def __play(self):
+        self.core.op("slider_timeline").par.Sliderignoreinteract = True
+        self.core.op("playback_rate").par.value0 = 60
+
+    def __read_from_file(self, target_file):
+        garbage = self.ower_comp.op("timeline/video").children
         try:
             self.timeline = TDOtioTimeline(
-                otio.adapters.read_from_file(target_file), self.owner_comp)
+                self.ower_comp, otio.adapters.read_from_file(target_file))
 
             for child in garbage:
                 if not child.__class__.__name__ == "containerCOMP":
@@ -59,35 +103,6 @@ class TDOtio:
             raise
 
         return self.timeline
-
-    def ReadFromFile(self, *args, **kwargs):
-        """Touch Designer Wrapper method for 'read_from_file'."""
-        return self.read_from_file(*args, **kwargs)
-
-    def Timeline(self):
-        return self.timeline
-
-    def Core(self):
-        return self.core
-
-    def play(self):
-        self.core.op("slider_timeline").par.Sliderignoreinteract = True
-        self.core.op("playback_rate").par.value0 = 60
-
-    def Play(self):
-        self.play()
-
-    def pause(self):
-        slider_timeline = self.core.op("slider_timeline")
-        playback_signal = self.core.op("playback_signal")[0]
-        slider_timeline.par.Value0 = \
-            playback_signal / (slider_timeline.par.Valuerange2 - slider_timeline.par.Valuerange1)
-        self.core.op("playback_speed").par.resetpulse.pulse()
-        slider_timeline.par.Sliderignoreinteract = False
-        self.core.op("playback_rate").par.value0 = 0
-
-    def Pause(self):
-        self.pause()
 
     def get_playback_clips(self):
         # TODO: heavy optomization needed, change name
@@ -132,20 +147,3 @@ class TDOtio:
             self.__math_b_chop.par.preoff = self.__calculate_clip_start_offset(b_media)
             self.__movie_b_top.par.file = self.__decode_url(b_media.media_reference.target_url)
             self.__movie_b_top.par.reloadpulse.pulse()
-
-    def GetPlaybackClips(self):
-        self.get_playback_clips()
-
-    def __calculate_clip_start_offset(self, otio_clip):
-        timeline_start = self.core.op("slider_timeline").par.Valuerange1
-        clip_start = otio_clip.trimmed_range_in_parent().start_time.value
-
-        return timeline_start - clip_start
-
-    @staticmethod
-    def __decode_url(url):
-        return url.replace("file://localhost/", "").replace("%3a", ":")
-
-    def __build(self):
-
-        self.core.op("slider_timeline").par.Valuerange2 = self.timeline.otio.duration().value

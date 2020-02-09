@@ -1,26 +1,23 @@
 import td
-from .tdotiotrack import TDOtioTrack
+
+from .tdotioentity import TDOtioEntity
+from .tdotiostack import TDOtioStack
 
 
-class TDOtioTimeline:
+class TDOtioTimeline(TDOtioEntity):
 
-    def __init__(self, otio_timeline, parent):
-        self.ownerComp = parent.op("timeline")
+    def __init__(self, parent, otio_timeline):
+        self.owner_comp = parent.create(td.containerCOMP, "timeline")
         self.otio = otio_timeline
-        self.tracks = []
-
-        self.__build()
+        self.type = "video"  # TODO: make Enum
+        self.video_stack = TDOtioStack(self.owner_comp, self.otio.video_tracks())
+        self.build()
 
     @property
     def name(self):
-        return self.ownerComp.name
+        return self.owner_comp.name
 
-    def __build(self):
-        stack = self.ownerComp.op("video")
+    def build(self):
 
-        for track in self.otio.video_tracks():
-            if not len(track):
-                continue
-            tdotio_t = TDOtioTrack(track, stack)
-            tdotio_t.ownerComp.par.alignorder = len(self.tracks)
-            self.tracks.append(tdotio_t)
+        for op_ in self.video_stack.owner_comp.findChildren(type=td.containerCOMP):
+            op_.destroy()

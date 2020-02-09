@@ -1,24 +1,44 @@
 import td
 
+from .tdotioentity import TDOtioEntity
+from .tdotiotrack import TDOtioTrack
 
-class TDOtioStack:
 
-    def __init__(self, owner_comp):
-        self.owner_comp = owner_comp
-        self.__comp_stack = self.owner_comp.op("comp_stack")
+class TDOtioStack(TDOtioEntity):
 
-    def __build(self, tracks_list):
+    def __init__(self, parent, tracks_list=None):
+        # TODO: the name here should be inherited more dynamically (in case its for audio)
+        self.owner_comp = parent.create(td.containerCOMP, "video")
+        self.Tracks = [TDOtioTrack(self.owner_comp, track) for track in tracks_list] or []
+
+        self.__build()
+
+    def Build(self):
+        self.__build()
+
+    def __build(self):
+        self.__reset()
         y_offset = 5
         ypos = None
-        for track in tracks_list:
-            index = tracks_list.index(track)
-            mvit = self.owner_comp.create(
-                td.moviefileinTOP, "{0}_{1}".format(index, track.name))
-            if ypos is None:
-                ypos = mvit.nodeY
-            else:
-                mvit.nodeY = ypos - mvit.nodeHeight - y_offset
-            self.__comp_stack.inputConnectors[index].connect(mvit)
 
-    def Build(self, tracks_list):
-        self.__build(tracks_list)
+        for track in self.Tracks:
+            if ypos is None:
+                ypos = track.owner_comp.nodeY
+            else:
+                track.owner_comp.nodeY = ypos - track.owner_comp.nodeHeight - y_offset
+            # index = self.Tracks.index(track)
+            # mfi_top = self.owner_comp.create(
+            #     td.moviefileinTOP, "{0}_{1}".format(index, track.name))
+            # if ypos is None:
+            #     ypos = mfi_top.nodeY
+            # else:
+            #     mfi_top.nodeY = ypos - mfi_top.nodeHeight - y_offset
+            # self._comp_stack.inputConnectors[index].connect(mfi_top)
+
+    def __reset(self):
+        for op_ in self.owner_comp.children:
+            text_ext_name = "text_" + self.__class__.__name__ + "Ext"  # text_TDOtioStackExt
+            if op_.name == text_ext_name:
+                continue
+
+            op_.destroy()
