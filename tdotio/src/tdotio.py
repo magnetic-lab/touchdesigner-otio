@@ -20,12 +20,13 @@ TDOTIO_PATH = os.path.join(os.environ.get("TDOTIO_PATH", ""), "src")
 if TDOTIO_PATH and not TDOTIO_PATH in sys.path:
     sys.path.append(TDOTIO_PATH)
 
+from .tdotioentity import TDOtioEntity
 from .tdotiotimeline import TDOtioTimeline
 
 TEST_FCPXML = "E:\\SANDBOX\\tdotio_demo\\tdotio_demo.xml"
 
 
-class TDOtio:
+class TDOtio(TDOtioEntity):
 
     def __init__(self, owner_comp):
 
@@ -43,10 +44,6 @@ class TDOtio:
     @property
     def Name(self):
         return self.owner_comp.name
-
-    @staticmethod
-    def __decode_url(url):
-        return url.replace("file://localhost/", "").replace("%3a", ":")
 
     def Core(self):
         return self.core

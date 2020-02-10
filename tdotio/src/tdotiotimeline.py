@@ -19,6 +19,8 @@ class TDOtioTimeline(TDOtioEntity):
         return self.owner_comp.name
 
     def __build(self):
+        self.owner_comp.nodeY = td.op.Core.nodeY + self.owner_comp.nodeHeight + 15
+        self.owner_comp.nodeX = td.op.Core.nodeX
         self.owner_comp.par.w.expr = "parent().par.w"
         self.owner_comp.par.phscrollbar = 1
         self.owner_comp.par.h = td.op.Playhead.par.h = self.video_stack.owner_comp.par.h

@@ -11,6 +11,7 @@ class TDOtioStack(TDOtioEntity):
         self.owner_comp = parent.create(td.containerCOMP, "video")
         self.otio = tracks_list
         self.tracks = []
+        self.video_library = []
 
         self.__build()
 
@@ -47,6 +48,8 @@ class TDOtioStack(TDOtioEntity):
         self.owner_comp.par.h = stack_h
         self.owner_comp.par.align = 4  # 4: `Bottom To Top`
 
+        self.__rebuild_library()
+
     def __cleanup(self):
         for op_ in self.owner_comp.children:
             text_ext_name = "text_" + self.__class__.__name__ + "Ext"  # text_TDOtioStackExt
@@ -54,3 +57,20 @@ class TDOtioStack(TDOtioEntity):
                 continue
 
             op_.destroy()
+
+    def __rebuild_library(self):
+        unique_video_paths = set()
+
+        # build set of all otio media_reference's
+        for track in self.tracks:
+            for clip in track.clips:
+                if not clip.is_media():
+                    continue
+                unique_video_paths |= set([clip.path])
+        self.video_library = list(unique_video_paths)
+
+        # create unique `movieFileInTOP` for each library video
+        for video_path in self.video_library:
+            mfi = td.op.Library.create(td.moviefileinTOP, self._make_legal(video_path))
+            mfi.par.play = 0
+            mfi.par.file = video_path
