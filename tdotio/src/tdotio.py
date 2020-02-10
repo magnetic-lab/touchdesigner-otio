@@ -29,8 +29,8 @@ class TDOtio:
 
     def __init__(self, owner_comp):
 
-        self.ower_comp = owner_comp
-        self.core = self.ower_comp.op("tdotio_core")
+        self.owner_comp = owner_comp
+        self.core = self.owner_comp.op("tdotio_core")
         self._current_frame = self.core.op("null_playhead")[0]
         self.timeline = self.__read_from_file(TEST_FCPXML)
 
@@ -42,7 +42,7 @@ class TDOtio:
 
     @property
     def Name(self):
-        return self.ower_comp.name
+        return self.owner_comp.name
 
     @staticmethod
     def __decode_url(url):
@@ -89,18 +89,8 @@ class TDOtio:
         self.core.op("playback_rate").par.value0 = 60
 
     def __read_from_file(self, target_file):
-        garbage = self.ower_comp.op("timeline/video").children
-        try:
-            self.timeline = TDOtioTimeline(
-                self.ower_comp, otio.adapters.read_from_file(target_file))
-
-            for child in garbage:
-                if not child.__class__.__name__ == "containerCOMP":
-                    continue
-                child.destroy()
-        except:
-            print(str(target_file))
-            raise
+        self.timeline = TDOtioTimeline(
+            self.owner_comp, otio.adapters.read_from_file(target_file))
 
         return self.timeline
 
