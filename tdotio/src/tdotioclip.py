@@ -35,15 +35,6 @@ class TDOtioClip(TDOtioEntity):
         if not self.is_media():
             return
 
-        # create a selectTOP to the library moviefileinTOP
-        legal_media_name = self._make_legal(self._decode_url(self.otio.media_reference.target_url))
-        select_moviefilein = self._core_base.create(td.selectTOP, "select")
-        try:
-            select_moviefilein.par.top = "{0}/{1}".format(td.op.Library.path, legal_media_name)
-        except:
-            # TODO: custom exception here
-            raise
-
     def is_media(self):
         # TODO: use otio api here
         return hasattr(self.otio, "media_reference")

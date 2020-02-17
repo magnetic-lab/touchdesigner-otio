@@ -7,7 +7,7 @@ class PlaybackExt:
         self.owner_comp = owner_comp
         self._comp_playback = self.owner_comp.op("comp_playback")
         self._constant_bg = self.owner_comp.op("constant_bg")
-        self._track_master = td.op.Core.op("track_master")
+        self._track_master = td.op.Core.op("base_track_master")
         self.video_tracks = []
 
         self.__rebuild(tdotio_stack)

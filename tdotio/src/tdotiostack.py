@@ -69,6 +69,10 @@ class TDOtioStack(TDOtioEntity):
                 unique_video_paths |= set([clip.path])
         self.video_library = list(unique_video_paths)
 
+        # garbage cleanup
+        for op_ in td.op.Library.ops():
+            op_.destroy()
+
         # create unique `movieFileInTOP` for each library video
         for video_path in self.video_library:
             mfi = td.op.Library.create(td.moviefileinTOP, self._make_legal(video_path))
