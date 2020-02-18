@@ -1,7 +1,9 @@
 import td
+import opentimelineio as otio
 
 from .tdotioentity import TDOtioEntity
 from .tdotiostack import TDOtioStack
+from .tdotiotrack import TDOtioTrack
 
 
 class TDOtioTimeline(TDOtioEntity):
@@ -11,6 +13,11 @@ class TDOtioTimeline(TDOtioEntity):
         self.otio = otio_timeline
         self.type = "video"  # TODO: make Enum
         self.video_stack = TDOtioStack(self.owner_comp, self.otio.video_tracks())
+        self.flattened_video_track = TDOtioTrack(
+            self.owner_comp.create(td.baseCOMP, "flattened_video_track"), self.flatten())
+
+        self.__current_clip = None
+        self.__current_clip_end_frame = 0
 
         self.__build()
 
@@ -32,3 +39,31 @@ class TDOtioTimeline(TDOtioEntity):
         select_playhead.par.alignallow = 1  # 1: `Ignore`
         select_playhead.par.x.expr = "op('{0}')[0]".format(
             td.op.Core.op("null_current_frame").path)
+
+    def flatten(self):
+        return otio.algorithms.flatten_stack(self.otio.video_tracks())
+
+    def clip_at_frame(self, frame):
+        # return early while frame is still on the same clip
+        if self.__current_clip:
+            start_frame = self.__current_clip_end_frame - self.__current_clip.duration().value
+            if self.__current_clip_end_frame >= frame >= start_frame:
+                return self.__current_clip
+
+        # find which clip is at frame
+        self.__current_clip_end_frame = 0
+        for clip in list(self.flattened_video_track.otio):
+            start_frame = self.__current_clip_end_frame
+            self.__current_clip_end_frame += clip.duration().value
+
+            # non-media clips
+            if not hasattr(clip, "media_reference"):
+                self.__current_clip = None
+                continue
+
+            #
+            if self.__current_clip_end_frame >= frame >= start_frame:
+                self.__current_clip = clip
+                return self.__current_clip
+
+        return self.__current_clip

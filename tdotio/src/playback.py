@@ -1,4 +1,5 @@
 import td
+import tdu
 
 
 class PlaybackExt:
@@ -9,6 +10,8 @@ class PlaybackExt:
         self._constant_bg = self.owner_comp.op("constant_bg")
         self._track_master = td.op.Core.op("base_track_master")
         self.video_tracks = []
+        self.a_clip = tdu.Dependency(str())
+        self.b_clip = tdu.Dependency(str())
 
         self.__rebuild(tdotio_stack)
 
@@ -17,10 +20,6 @@ class PlaybackExt:
         for track_clone in self.owner_comp.ops("video_track_*"):
             if isinstance(track_clone, td.baseCOMP):
                 track_clone.destroy()
-
-        self.__add_video_tracks(tdotio_stack)
-        self._constant_bg.outputConnectors[0].connect(
-            self._comp_playback.inputConnectors[len(tdotio_stack.tracks)])
 
     def __add_video_tracks(self, tdotio_stack):
         node_y = self._constant_bg.nodeY + self._constant_bg.nodeHeight

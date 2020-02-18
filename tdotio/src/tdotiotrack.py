@@ -11,7 +11,7 @@ class TDOtioTrack(TDOtioEntity):
     def __init__(self, parent, otio_track):
         self.name = otio_track.name or "track"
         self.owner_comp = parent.create(td.containerCOMP, self._make_legal(self.name))
-        self.otio = list(otio_track)
+        self.otio = otio_track
         self.clips = []
         self.__build()
 
