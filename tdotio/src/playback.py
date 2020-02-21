@@ -17,7 +17,7 @@ class PlaybackExt:
 
     def __rebuild(self, tdotio_stack):
         # garbage cleanup
-        for track_clone in tdotio_stack:
+        for track_clone in tdotio_stack.tracks:
             if isinstance(track_clone, td.baseCOMP):
                 track_clone.destroy()
 

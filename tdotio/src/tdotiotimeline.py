@@ -41,6 +41,7 @@ class TDOtioTimeline(TDOtioEntity):
             td.op.Core.op("null_current_frame").path)
 
     def flatten(self):
+        print(otio.algorithms.flatten_stack(self.otio.video_tracks()))
         return otio.algorithms.flatten_stack(self.otio.video_tracks())
 
     def clip_at_frame(self, frame):
@@ -55,14 +56,17 @@ class TDOtioTimeline(TDOtioEntity):
         for clip in list(self.flattened_video_track.otio):
             start_frame = self.__current_clip_end_frame
             self.__current_clip_end_frame += clip.duration().value
+            print(clip)
+            print(self.__current_clip_end_frame)
 
             # non-media clips
-            if not hasattr(clip, "media_reference"):
-                self.__current_clip = None
-                continue
+            # if not hasattr(clip, "media_reference"):
+            #     self.__current_clip = None
+            #     continue
 
             #
             if self.__current_clip_end_frame >= frame >= start_frame:
+                print(clip)
                 self.__current_clip = clip
                 return self.__current_clip
 
