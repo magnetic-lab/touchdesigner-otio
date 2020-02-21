@@ -23,8 +23,6 @@ if TDOTIO_PATH and not TDOTIO_PATH in sys.path:
 from .tdotioentity import TDOtioEntity
 from .tdotiotimeline import TDOtioTimeline
 
-TEST_FCPXML = "E:\\SANDBOX\\tdotio_demo\\tdotio_demo.xml"
-
 
 class TDOtio(TDOtioEntity):
 
@@ -33,7 +31,12 @@ class TDOtio(TDOtioEntity):
         self.owner_comp = owner_comp
         self.core = self.owner_comp.op("tdotio_core")
         self._current_frame = self.core.op("null_playhead")[0]
-        self.timeline = self.__read_from_file(TEST_FCPXML)
+
+        timeline = None
+        read_from_file_val = self.owner_comp.par.Readfromfile.val
+        if read_from_file_val:
+            timeline = self.__read_from_file(read_from_file_val)
+        self.timeline = timeline
 
         self.__math_a_chop = self.core.op("math_a")
         self.__math_b_chop = self.core.op("math_b")

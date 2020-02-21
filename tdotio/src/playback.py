@@ -17,7 +17,7 @@ class PlaybackExt:
 
     def __rebuild(self, tdotio_stack):
         # garbage cleanup
-        for track_clone in self.owner_comp.ops("video_track_*"):
+        for track_clone in tdotio_stack:
             if isinstance(track_clone, td.baseCOMP):
                 track_clone.destroy()
 
