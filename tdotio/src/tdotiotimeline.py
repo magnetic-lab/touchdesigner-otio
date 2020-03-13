@@ -17,7 +17,7 @@ class TDOtioTimeline(TDOtioEntity):
             self.owner_comp.create(td.baseCOMP, "flattened_video_track"), self.flatten())
 
         self.__current_clip = None
-        self.__current_clip_end_frame = 0
+        self.__current_clip_global_end_frame = 0
 
         self.__build()
 
@@ -41,33 +41,28 @@ class TDOtioTimeline(TDOtioEntity):
             td.op.Core.op("null_current_frame").path)
 
     def flatten(self):
-        print(otio.algorithms.flatten_stack(self.otio.video_tracks()))
         return otio.algorithms.flatten_stack(self.otio.video_tracks())
 
     def clip_at_frame(self, frame):
         # return early while frame is still on the same clip
         if self.__current_clip:
-            start_frame = self.__current_clip_end_frame - self.__current_clip.duration().value
-            if self.__current_clip_end_frame >= frame >= start_frame:
+            start = self.__current_clip.trimmed_range_in_parent().start_time.value
+            end = start + self.__current_clip.trimmed_range_in_parent().duration.value
+            if self.__in_range(frame, start, end):  # True if within range
                 return self.__current_clip
 
         # find which clip is at frame
-        self.__current_clip_end_frame = 0
         for clip in list(self.flattened_video_track.otio):
-            start_frame = self.__current_clip_end_frame
-            self.__current_clip_end_frame += clip.duration().value
-            print(clip)
-            print(self.__current_clip_end_frame)
+            start = clip.trimmed_range_in_parent().start_time.value
+            end = start + clip.trimmed_range_in_parent().duration.value
 
-            # non-media clips
-            # if not hasattr(clip, "media_reference"):
-            #     self.__current_clip = None
-            #     continue
-
-            #
-            if self.__current_clip_end_frame >= frame >= start_frame:
+            if self.__in_range(frame, start, end):
                 print(clip)
                 self.__current_clip = clip
-                return self.__current_clip
+                break
 
         return self.__current_clip
+
+    @staticmethod
+    def __in_range(frame, start, end):
+        return (frame - start) * (frame - end) < 0
